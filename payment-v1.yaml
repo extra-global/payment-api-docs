@@ -1,0 +1,292 @@
+openapi: 3.0.3
+info:
+  title: ExtraPay Payment API
+  description: |
+    **ExtraPay Payment API** empowers developers to integrate payment processing capabilities into their applications. This API allows for the creation, retrieval, and management of invoices with robust features. :money_with_wings:
+    
+    **Getting Started**:
+    1. **Obtain an Access Token**: Secure an access token via the Partner Dashboard.
+    2. **Create a Wallet**: Set up a wallet for the currency you wish to accept payments in.
+    3. **Generate Invoices**: Use the token and wallet ID to issue invoices and manage payments.
+    
+    The API supports handling of callbacks and redirection URLs to enhance your payment flows.
+  version: 1.0.0
+  x-logo:
+    url: "./logo.png"
+    backgroundColor: "#FFFFFF"
+    altText: "ExtraPay Logo"
+servers:
+  - url: 'https://api.payment.extrabet.services/v1'
+paths:
+  /invoices/{invoiceID}:
+    parameters:
+      - name: invoiceID
+        in: path
+        required: true
+        schema:
+          type: string
+        description: "The unique identifier for an invoice."
+    get:
+      summary: Get Invoice Details
+      operationId: getInvoice
+      tags:
+        - Invoices
+      security:
+        - headerAuth: []
+      responses:
+        '200':
+          description: "Successfully retrieves the detailed information of the specified invoice. :page_facing_up:"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Invoice'
+              examples:
+                example1:
+                  summary: Example response
+                  value:
+                    id: "invoice123"
+                    merchantID: "merchant123"
+                    customerID: "customer123"
+                    url: "https://paygate.extrabet.services/invoice123"
+                    name: "Monthly Subscription"
+                    description: "Monthly charge for service"
+                    totalAmount: 100.00
+                    totalOriginalAmount: 100.00
+                    paidAmount: 0.00
+                    currency: "USDT"
+                    status: "PENDING"
+                    address: "123 Billing St, Billtown, BT 12345"
+                    createdAt: "2024-01-01T12:00:00Z"
+                    updatedAt: "2024-01-01T12:00:00Z"
+                    expiresAt: "2024-02-01T12:00:00Z"
+                    callBackURL: "https://example.com/callbacks/invoice123"
+                    successURL: "https://example.com/success/invoice123"
+                    failureURL: "https://example.com/failure/invoice123"
+  /invoices:
+    post:
+      summary: Create New Invoice
+      operationId: createInvoice
+      description: |
+        **Create Invoice**:
+        Generate a new invoice by providing necessary details such as the amount, currency, and wallet ID. This endpoint also allows specifying URLs for payment callbacks and redirections to handle payment outcomes effectively.
+        
+        - **Callback URL**: Receives updates about the invoice status, regardless of where the payment page is hosted.
+        - **Success URL**: Redirects users upon successful payment if using the provided payment page.
+        - **Failure URL**: Redirects users if the payment fails when using the provided payment page.
+        
+        Upon successful invoice creation, a URL is provided in the response to direct users to the payment interface. :link:
+      tags:
+        - Invoices
+      security:
+        - headerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InvoiceCreate'
+            examples:
+              exampleRequest:
+                summary: Example create invoice request
+                value:
+                  amount: 100.00
+                  currency: "USDT"
+                  walletID: "wallet123"
+                  expiresAt: "2024-02-01T12:00:00Z"
+                  name: "Monthly Subscription"
+                  description: "Monthly charge for service"
+                  callBackURL: "https://example.com/callbacks/invoice123"
+                  successURL: "https://example.com/success/invoice123"
+                  failureURL: "https://example.com/failure/invoice123"
+      responses:
+        '201':
+          description: "Invoice successfully created. The response includes the URL to the payment page. :heavy_check_mark:"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Invoice'
+              examples:
+                exampleResponse:
+                  summary: Example invoice created response
+                  value:
+                    id: "invoice123"
+                    merchantID: "merchant123"
+                    customerID: "customer123"
+                    url: "https://example.com/invoice/invoice123"
+                    name: "Monthly Subscription"
+                    description: "Monthly charge for service"
+                    totalAmount: 100.00
+                    totalOriginalAmount: 100.00
+                    paidAmount: 0.00
+                    currency: "USDT"
+                    status: "PENDING"
+                    address: "123 Billing St, Billtown, BT 12345"
+                    createdAt: "2024-01-01T12:00:00Z"
+                    updatedAt: "2024-01-01T12:00:00Z"
+                    expiresAt: "2024-02-01T12:00:00Z"
+                    callBackURL: "https://example.com/callbacks/invoice123"
+                    successURL: "https://example.com/success/invoice123"
+                    failureURL: "https://example.com/failure/invoice123"
+components:
+  securitySchemes:
+    headerAuth:
+      type: apiKey
+      in: header
+      name: Authorization
+  schemas:
+    Currency:
+      type: object
+      required:
+        - code
+        - name
+        - symbol
+        - precision
+      properties:
+        code:
+          type: string
+        name:
+          type: string
+        symbol:
+          type: string
+        precision:
+          type: integer
+    CurrencyCode:
+      type: string
+      default: USDT
+    CurrencyList:
+      type: object
+      required:
+        - currencies
+      properties:
+        currencies:
+          type: array
+          items:
+            $ref: '#/components/schemas/Currency'
+    Error:
+      type: object
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+    WalletType:
+      type: string
+      enum:
+        - TRC20USDT
+    InvoiceStatus:
+      type: string
+      enum:
+        - PENDING
+        - PAID
+        - UNDERPAID
+        - OVERPAID
+        - EXPIRED
+        - CANCELLED
+    InvoiceCreate:
+      type: object
+      required:
+        - amount
+        - currency
+        - walletID
+      properties:
+        amount:
+          type: number
+          format: double
+        currency:
+          type: string
+        walletID:
+          type: string
+        expiresAt:
+          type: string
+          format: date-time
+        name:
+          type: string
+        description:
+          type: string
+        callBackURL:
+          type: string
+          format: uri
+        successURL:
+          type: string
+          format: uri
+        failureURL:
+          type: string
+          format: uri
+    InvoicesResponse:
+      type: object
+      required:
+        - invoices
+      properties:
+        invoices:
+          type: array
+          items:
+            $ref: '#/components/schemas/Invoice'
+    Invoice:
+      type: object
+      required:
+        - id
+        - merchantID
+        - url
+        - name
+        - description
+        - totalAmount
+        - totalOriginalAmount
+        - paidAmount
+        - currency
+        - status
+        - address
+        - createdAt
+        - updatedAt
+        - expiresAt
+      properties:
+        id:
+          type: string
+        merchantID:
+          type: string
+        customerID:
+          type: string
+        externalCustomerID:
+          type: string
+        url:
+          type: string
+          format: uri
+        name:
+          type: string
+        description:
+          type: string
+        totalAmount:
+          type: number
+          format: double
+        totalOriginalAmount:
+          type: number
+          format: double
+        paidAmount:
+          type: number
+          format: double
+        currency:
+          $ref: '#/components/schemas/CurrencyCode'
+        status:
+          $ref: '#/components/schemas/InvoiceStatus'
+        address:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        expiresAt:
+          type: string
+          format: date-time
+        callBackURL:
+          type: string
+          format: uri
+        successURL:
+          type: string
+          format: uri
+        failureURL:
+          type: string
+          format: uri
