@@ -11,12 +11,8 @@ info:
     
     The API supports handling of callbacks and redirection URLs to enhance your payment flows.
   version: 1.0.0
-  x-logo:
-    url: "./logo.png"
-    backgroundColor: "#FFFFFF"
-    altText: "ExtraPay Logo"
 servers:
-  - url: 'https://api.payment.extrabet.services/v1'
+  - url: 'https://api.extrapay.io'
 paths:
   /invoices/{invoiceID}:
     parameters:
@@ -32,7 +28,7 @@ paths:
       tags:
         - Invoices
       security:
-        - headerAuth: []
+        - headerAuth: [ ]
       responses:
         '200':
           description: "Successfully retrieves the detailed information of the specified invoice. :page_facing_up:"
@@ -78,7 +74,7 @@ paths:
       tags:
         - Invoices
       security:
-        - headerAuth: []
+        - headerAuth: [ ]
       requestBody:
         required: true
         content:
@@ -127,6 +123,55 @@ paths:
                     callBackURL: "https://example.com/callbacks/invoice123"
                     successURL: "https://example.com/success/invoice123"
                     failureURL: "https://example.com/failure/invoice123"
+  /withdraws:
+    post:
+      summary: Request Withdrawal
+      operationId: requestWithdraw
+      description: |
+        **Request Withdrawal**:
+        Initiate a withdrawal request by specifying the amount, currency, and destination address. Upon successful processing, the withdrawal status is updated to reflect the outcome.
+        
+        - **Amount**: The total amount to withdraw.
+        - **Currency**: The currency to withdraw.
+        - **Address**: The destination address for the withdrawal.
+        
+        The response includes the withdrawal details and status. :moneybag:
+      tags:
+        - Withdrawals
+      security:
+        - headerAuth: [ ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WithdrawRequest'
+            examples:
+              exampleRequest:
+                summary: Example request withdraw request
+                value:
+                  amount: 100.00
+                  currency: "USDT"
+                  address: "TJ5ZrZ1Qp2y4Y6Jh9z1f1Wt1Q1z1Y1z1"
+      responses:
+        '201':
+          description: "Withdrawal request successfully initiated. The response includes the withdrawal details. :heavy_check_mark:"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Withdraw'
+              examples:
+                exampleResponse:
+                  summary: Example withdraw request response
+                  value:
+                    id: "withdraw123"
+                    originalAmount: 100.00
+                    currency: "USDT"
+                    amount: 100.00
+                    address: "TJ5ZrZ1Qp2y4Y6Jh9z1f1Wt1Q1z1Y1z1"
+                    status: "PENDING"
+                    createdAt: "2024-01-01T12:00:00Z"
+                    updatedAt: "2024-01-01T12:00:00Z"
 components:
   securitySchemes:
     headerAuth:
@@ -176,6 +221,61 @@ components:
       type: string
       enum:
         - TRC20USDT
+    WithdrawStatus:
+      type: string
+      enum:
+        - PENDING
+        - COMPLETED
+        - FAILED
+    WithdrawRequest:
+      required:
+        - amount
+        - currency
+        - address
+      properties:
+        amount:
+          type: number
+          format: double
+        currency:
+          type: string
+        address:
+          type: string
+    Withdraw:
+      required:
+        - id
+        - originalAmount
+        - currency
+        - amount
+        - address
+        - status
+        - createdAt
+        - updatedAt
+      properties:
+        id:
+          type: string
+        originalAmount:
+          type: number
+          format: double
+        currency:
+          type: string
+        amount:
+          type: number
+          format: double
+        address:
+          type: string
+        transactionID:
+          type: string
+        trackingLink:
+          type: string
+          format: uri
+        status:
+          $ref: '#/components/schemas/WithdrawStatus'
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
     InvoiceStatus:
       type: string
       enum:
@@ -289,4 +389,4 @@ components:
           format: uri
         failureURL:
           type: string
-          format: uri
+          format: URI
